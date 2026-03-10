@@ -166,5 +166,22 @@ TIMER1_READ_TO_time_alg2:
 
     ret
 
+///////// COPIAR DATOS ENTRE TABLAS /////////
+
+COPY_N_BYTES:
+
+; Copia N números desde la tabla fuente a la tabla destino
+
+    ldi r20, N
+
+COPY_LOOP:
+
+    ld  r16, Z+
+    st  Y+, r16
+
+    dec r20
+    brne COPY_LOOP
+
+    ret
 
 
