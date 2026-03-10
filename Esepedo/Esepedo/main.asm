@@ -202,4 +202,23 @@ FILL_LOOP:
     brne FILL_LOOP
 
     ret
+///////// GENERADOR PSEUDOALEATORIO /////////
 
+RNG_NEXT_0_100:
+
+    lds r16, rng_state
+
+    mov r17, r16
+    andi r17, 0x01
+
+    lsr r16
+
+    tst r17
+    breq RNG_NOXOR
+
+    ldi r18, 0xB8
+    eor r16, r18
+
+RNG_NOXOR:
+
+    sts rng_state, r16
