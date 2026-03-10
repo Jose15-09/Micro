@@ -274,4 +274,80 @@ BS_NOSWAP:
 
     ret
 
+///////// INSERTION SORT /////////
+
+INSERTION_SORT_N:
+
+    ldi r21, 1
+
+IS_OUTER:
+
+    movw r28, r30
+    mov  r23, r21
+
+IS_ADV_I:
+
+    tst  r23
+    breq IS_GOT_I
+
+    adiw r28, 1
+    dec  r23
+    rjmp IS_ADV_I
+
+IS_GOT_I:
+
+    ld   r18, Y
+
+    mov  r22, r21
+    dec  r22
+
+
+IS_SHIFT:
+
+    cpi  r22, 0xFF
+    breq IS_INSERT_0
+
+    movw r28, r30
+    mov  r23, r22
+
+IS_ADV_J:
+
+    tst  r23
+    breq IS_GOT_J
+
+    adiw r28, 1
+    dec  r23
+    rjmp IS_ADV_J
+
+IS_GOT_J:
+
+    ld   r19, Y
+
+    cp   r18, r19
+    brsh IS_PLACE_KEY
+
+; Mover número a la derecha
+
+    std  Y+1, r19
+
+    dec  r22
+    rjmp IS_SHIFT
+
+IS_PLACE_KEY:
+
+    std  Y+1, r18
+    rjmp IS_NEXT_I
+
+IS_INSERT_0:
+
+    movw r28, r30
+    st   Y, r18
+
+IS_NEXT_I:
+
+    inc  r21
+    cpi  r21, N
+    brlo IS_OUTER
+
+    ret
 
