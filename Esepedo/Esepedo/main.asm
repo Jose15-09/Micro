@@ -61,5 +61,9 @@ RESET:
 
     ldi r16, (1<<CS11) | (1<<CS10)
     sts TCCR1B, r16
+///////// SEMILLA DEL GENERADOR ALEATORIO /////////
+
+    ldi r16, 0xA7
+    sts rng_state, r16
 
 
