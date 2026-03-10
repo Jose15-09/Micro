@@ -69,5 +69,30 @@ RESET:
 ///////// GENERAR 100 NÚMEROS ALEATORIOS /////////
 
     rcall FILL_RANDOM_0_100
+///////// ORDENAMIENTO CON BUBBLE SORT /////////
 
+; Copiar números originales a otra tabla
+
+    ldi ZH, high(table_of_unsorted_numbers)
+    ldi ZL, low(table_of_unsorted_numbers)
+
+    ldi YH, high(table_of_sorted_numbers_alg1)
+    ldi YL, low(table_of_sorted_numbers_alg1)
+
+    rcall COPY_N_BYTES
+
+; Reiniciar timer
+
+    rcall TIMER1_RESET
+
+; Ejecutar Bubble Sort
+
+    ldi ZH, high(table_of_sorted_numbers_alg1)
+    ldi ZL, low(table_of_sorted_numbers_alg1)
+
+    rcall BUBBLE_SORT_N
+
+; Guardar tiempo
+
+    rcall TIMER1_READ_TO_time_alg1
 
