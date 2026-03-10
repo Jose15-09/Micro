@@ -123,5 +123,9 @@ RESET:
 ; Guardar tiempo
 
     rcall TIMER1_READ_TO_time_alg2
+///////// FIN DEL PROGRAMA /////////
+
+DONE:
+    rjmp DONE
 
 
