@@ -35,3 +35,17 @@ time_alg2_ticks:.byte 2
 .cseg
 .org 0x0000
     rjmp RESET
+///////// INICIO DEL PROGRAMA /////////
+
+RESET:
+
+; Inicializar el stack (necesario para usar subrutinas)
+
+    ldi r16, high(RAMEND)
+    out SPH, r16
+    ldi r16, low(RAMEND)
+    out SPL, r16
+
+; El registro r1 siempre debe valer 0 en AVR
+
+    clr r1
