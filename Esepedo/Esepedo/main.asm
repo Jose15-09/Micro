@@ -66,4 +66,8 @@ RESET:
     ldi r16, 0xA7
     sts rng_state, r16
 
+///////// GENERAR 100 NÚMEROS ALEATORIOS /////////
+
+    rcall FILL_RANDOM_0_100
+
 
