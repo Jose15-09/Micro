@@ -222,3 +222,56 @@ RNG_NEXT_0_100:
 RNG_NOXOR:
 
     sts rng_state, r16
+///////// REDUCIR VALOR A 0..100 /////////
+
+REDUCE_MOD:
+
+    cpi r16, MODVAL
+    brlo RNG_DONE
+
+    subi r16, MODVAL
+    rjmp REDUCE_MOD
+
+RNG_DONE:
+    ret
+
+
+
+///////// BUBBLE SORT /////////
+
+BUBBLE_SORT_N:
+
+    ldi r21, N-1
+
+BS_OUTER:
+
+    movw r28, r30
+    clr  r22
+
+BS_INNER:
+
+    ld   r16, Y
+    ldd  r17, Y+1
+
+    cp   r17, r16
+    brsh BS_NOSWAP
+
+; Intercambiar números si están en orden incorrecto
+
+    st   Y,   r17
+    std  Y+1, r16
+
+BS_NOSWAP:
+
+    adiw r28, 1
+    inc  r22
+
+    cp   r22, r21
+    brlo BS_INNER
+
+    dec r21
+    brne BS_OUTER
+
+    ret
+
+
