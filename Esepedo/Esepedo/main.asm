@@ -184,4 +184,22 @@ COPY_LOOP:
 
     ret
 
+///////// GENERAR NÚMEROS ALEATORIOS /////////
+
+FILL_RANDOM_0_100:
+
+    ldi ZH, high(table_of_unsorted_numbers)
+    ldi ZL, low(table_of_unsorted_numbers)
+
+    ldi r20, N
+
+FILL_LOOP:
+
+    rcall RNG_NEXT_0_100
+    st   Z+, r16
+
+    dec  r20
+    brne FILL_LOOP
+
+    ret
 
