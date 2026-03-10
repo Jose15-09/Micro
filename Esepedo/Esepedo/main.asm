@@ -49,3 +49,17 @@ RESET:
 ; El registro r1 siempre debe valer 0 en AVR
 
     clr r1
+
+///////// CONFIGURAR TIMER1 /////////
+
+; Este timer se usa para medir cuánto tarda cada algoritmo
+
+    ldi r16, 0x00
+    sts TCCR1A, r16
+
+; Prescaler 64 (hace que el timer avance más lento)
+
+    ldi r16, (1<<CS11) | (1<<CS10)
+    sts TCCR1B, r16
+
+
