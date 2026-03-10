@@ -96,3 +96,32 @@ RESET:
 
     rcall TIMER1_READ_TO_time_alg1
 
+
+///////// ORDENAMIENTO CON INSERTION SORT /////////
+
+; Copiar números originales nuevamente
+
+    ldi ZH, high(table_of_unsorted_numbers)
+    ldi ZL, low(table_of_unsorted_numbers)
+
+    ldi YH, high(table_of_sorted_numbers_alg2)
+    ldi YL, low(table_of_sorted_numbers_alg2)
+
+    rcall COPY_N_BYTES
+
+; Reiniciar timer
+
+    rcall TIMER1_RESET
+
+; Ejecutar Insertion Sort
+
+    ldi ZH, high(table_of_sorted_numbers_alg2)
+    ldi ZL, low(table_of_sorted_numbers_alg2)
+
+    rcall INSERTION_SORT_N
+
+; Guardar tiempo
+
+    rcall TIMER1_READ_TO_time_alg2
+
+
