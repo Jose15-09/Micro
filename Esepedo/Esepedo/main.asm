@@ -1,12 +1,10 @@
-;
-; Esepedo.asm
-;
-; Created: 09/03/2026 05:39:11 p. m.
-; Author : josea
-;
+///////// ACTIVIDAD I - MICROCONTROLADORES /////////
+///////// ATmega328P - Arduino UNO - 16 MHz /////////
+///////// Genera números aleatorios, los ordena y mide tiempo /////////
 
+.include "m328pdef.inc"
 
-; Replace with your application code
-start:
-    inc r16
-    rjmp start
+///////// CONSTANTES DEL PROGRAMA /////////
+
+.equ N      = 100
+.equ MODVAL = 101
