@@ -1,6 +1,6 @@
 ///////// ACTIVIDAD I - MICROCONTROLADORES /////////
 ///////// ATmega328P - Arduino UNO - 16 MHz /////////
-///////// Genera números aleatorios, los ordena y mide tiempo /////////
+///////// Genera nÃºmeros aleatorios, los ordena y mide tiempo /////////
 
 .include "m328pdef.inc"
 
@@ -8,3 +8,4 @@
 
 .equ N      = 100
 .equ MODVAL = 101
+cmdkvdvmv
