@@ -29,3 +29,9 @@ time_alg1_ticks:.byte 2
 
 time_alg2_ticks:.byte 2
 ; Tiempo que tarda Insertion Sort
+
+///////// CÓDIGO DEL PROGRAMA /////////
+
+.cseg
+.org 0x0000
+    rjmp RESET
