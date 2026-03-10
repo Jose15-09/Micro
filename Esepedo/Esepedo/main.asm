@@ -123,9 +123,48 @@ RESET:
 ; Guardar tiempo
 
     rcall TIMER1_READ_TO_time_alg2
+
 ///////// FIN DEL PROGRAMA /////////
 
 DONE:
     rjmp DONE
+
+///////// FUNCIONES DEL TIMER /////////
+
+TIMER1_RESET:
+
+; Reinicia el contador del timer
+
+    ldi r16, 0
+    sts TCNT1H, r16
+    sts TCNT1L, r16
+    ret
+
+
+TIMER1_READ_TO_time_alg1:
+
+; Lee el valor del timer y lo guarda
+
+    lds r18, TCNT1L
+    lds r19, TCNT1H
+
+    sts time_alg1_ticks,   r18
+    sts time_alg1_ticks+1, r19
+
+    ret
+
+
+TIMER1_READ_TO_time_alg2:
+
+; Lee el valor del timer para el segundo algoritmo
+
+    lds r18, TCNT1L
+    lds r19, TCNT1H
+
+    sts time_alg2_ticks,   r18
+    sts time_alg2_ticks+1, r19
+
+    ret
+
 
 
