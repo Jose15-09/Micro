@@ -1,10 +1,10 @@
 
-AVRASM ver. 2.2.8  C:\Users\josea\OneDrive\Escritorio\Micro\Micro\Esacosa\Esacosa\main.asm Wed Mar 11 22:43:12 2026
+AVRASM ver. 2.2.8  C:\Users\josea\OneDrive\Escritorio\Micro\Micro\Esacosa\Esacosa\main.asm Thu Mar 12 21:48:20 2026
 
 [builtin](2): Including file 'D:/7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328Pdef.inc'
 [builtin](2): Including file 'D:/7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328Pdef.inc'
                                  
-                                 .equ N      = 100
+                                 ; 1. Aquí solo definimos algunos valores que vamos a usar en todo el programa
                                  
                                  ;***** Created: 2011-02-09 12:03 ******* Source: ATmega328P.xml **********
                                  ;*************************************************************************
@@ -985,58 +985,93 @@ AVRASM ver. 2.2.8  C:\Users\josea\OneDrive\Escritorio\Micro\Micro\Esacosa\Esacos
                                  
                                  ; ***** END OF FILE ******************************************************
                                  
-                                 .equ MODVAL = 101
+                                 ; para no estar escribiendo números a cada rato
+                                 
+                                 .equ N      = 100        ; básicamente el arreglo tendrá 100 números
+                                 .equ MODVAL = 101        ; esto se usa para que los números aleatorios queden entre 0 y 100
+                                 
+                                 ; 2. Aquí empieza la parte de memoria RAM
+                                 ; básicamente se aparta espacio para guardar todos los arreglos y variables
                                  
                                  .dseg
                                  
-000100                           table_of_unsorted_numbers:      .byte N
-000164                           table_of_sorted_numbers_alg1:   .byte N
-0001c8                           table_of_sorted_numbers_alg2:   .byte N
-00022c                           rng_state:                      .byte 1
-00022d                           time_alg1_ticks:                .byte 2
-00022f                           time_alg2_ticks:                .byte 2
+000100                           table_of_unsorted_numbers:      .byte N   ; aquí se guardan los 100 números aleatorios sin ordenar
+000164                           table_of_sorted_numbers_alg1:   .byte N   ; aquí se guardará el arreglo ya ordenado con Bubble Sort
+0001c8                           table_of_sorted_numbers_alg2:   .byte N   ; aquí se guardará el arreglo ordenado con Selection Sort
+                                 
+00022c                           rng_state:                      .byte 1   ; esta variable guarda el estado del generador de números aleatorios
+                                 
+00022d                           time_alg1_ticks:                .byte 2   ; aquí se guardará cuánto tiempo tardó Bubble Sort
+00022f                           time_alg2_ticks:                .byte 2   ; aquí se guardará cuánto tiempo tardó Selection Sort
+                                 
+                                 ; 3. A partir de aquí ya empieza el código que ejecuta el microcontrolador
                                  
                                  .cseg
                                  .org 0x0000
-000000 c000                          rjmp RESET
+000000 c000                          rjmp RESET              ; cuando el micro arranca siempre empieza en 0x0000 y de una vez brinca a RESET
                                  
+                                 
+                                 ; 4. Aquí empieza el programa como tal
+                                 ; primero se inicializan varias cosas importantes
                                  
                                  RESET:
                                  
-000001 e008                          ldi r16, high(RAMEND)
-000002 bf0e                          out SPH, r16
-000003 ef0f                          ldi r16, low(RAMEND)
-000004 bf0d                          out SPL, r16
+                                     ; esta parte configura el stack
+                                     ; el stack sirve para guardar direcciones cuando se llaman funciones
                                  
-000005 2411                          clr r1
+000001 e008                          ldi r16, high(RAMEND)   ; carga en r16 la parte alta de la última dirección de RAM
+000002 bf0e                          out SPH, r16            ; se guarda en el registro alto del stack pointer
                                  
-000006 e000                          ldi r16, 0x00
-000007 9300 0080                     sts TCCR1A, r16
+000003 ef0f                          ldi r16, low(RAMEND)    ; carga la parte baja de la última dirección de RAM
+000004 bf0d                          out SPL, r16            ; se guarda en el registro bajo del stack pointer
+                                 
+000005 2411                          clr r1                  ; limpia el registro r1 y lo deja en cero
+                                 
+                                     ; aquí configuramos el timer1
+                                     ; este timer lo usamos para medir cuánto tardan los algoritmos
+                                 
+000006 e000                          ldi r16, 0x00           ; carga 0 en r16
+000007 9300 0080                     sts TCCR1A, r16         ; deja el Timer1 en modo normal
                                  
 000009 e003                          ldi r16, (1<<CS11) | (1<<CS10)
-00000a 9300 0081                     sts TCCR1B, r16
+                                                             ; activamos estos bits para configurar el prescaler
+00000a 9300 0081                     sts TCCR1B, r16         ; el timer queda trabajando con prescaler de 64
                                  
-00000c ea07                          ldi r16, 0xA7
-00000d 9300 022c                     sts rng_state, r16
+                                     ; aquí inicializamos el generador de números aleatorios
                                  
-00000f d033                          rcall FILL_RANDOM_0_100
+00000c ea07                          ldi r16, 0xA7           ; usamos este valor como semilla inicial
+00000d 9300 022c                     sts rng_state, r16      ; se guarda en la variable rng_state
+                                 
+                                     ; ahora se generan los 100 números aleatorios
+                                 
+00000f d033                          rcall FILL_RANDOM_0_100 ; esta función llena el arreglo con números del 0 al 100
+                                 
+                                     ; ahora preparamos los punteros para copiar el arreglo
                                  
 000010 e0f1                          ldi ZH, high(table_of_unsorted_numbers)
 000011 e0e0                          ldi ZL, low(table_of_unsorted_numbers)
+                                                             ; el puntero Z apunta al arreglo original
                                  
 000012 e0d1                          ldi YH, high(table_of_sorted_numbers_alg1)
 000013 e6c4                          ldi YL, low(table_of_sorted_numbers_alg1)
+                                                             ; el puntero Y apunta al arreglo destino
                                  
-000014 d028                          rcall COPY_N_BYTES
+000014 d028                          rcall COPY_N_BYTES      ; copia el arreglo original al que usará el algoritmo 1
                                  
-000015 d00f                          rcall TIMER1_RESET
+                                     ; ahora vamos a medir cuánto tarda Bubble Sort
+                                 
+000015 d00f                          rcall TIMER1_RESET      ; primero se reinicia el timer
                                  
 000016 e0f1                          ldi ZH, high(table_of_sorted_numbers_alg1)
 000017 e6e4                          ldi ZL, low(table_of_sorted_numbers_alg1)
+                                                             ; ahora Z apunta al arreglo que se va a ordenar
                                  
-000018 d042                          rcall BUBBLE_SORT_N
+000018 d042                          rcall BUBBLE_SORT_N     ; aquí se ejecuta Bubble Sort
                                  
 000019 d011                          rcall TIMER1_READ_TO_time_alg1
+                                                             ; aquí se guarda el tiempo que tardó el algoritmo
+                                 
+                                     ; ahora se preparan los datos para el segundo algoritmo
                                  
 00001a e0f1                          ldi ZH, high(table_of_unsorted_numbers)
 00001b e0e0                          ldi ZL, low(table_of_unsorted_numbers)
@@ -1044,40 +1079,51 @@ AVRASM ver. 2.2.8  C:\Users\josea\OneDrive\Escritorio\Micro\Micro\Esacosa\Esacos
 00001c e0d1                          ldi YH, high(table_of_sorted_numbers_alg2)
 00001d ecc8                          ldi YL, low(table_of_sorted_numbers_alg2)
                                  
-00001e d01e                          rcall COPY_N_BYTES
+00001e d01e                          rcall COPY_N_BYTES      ; vuelve a copiar el arreglo original
                                  
-00001f d005                          rcall TIMER1_RESET
+                                     ; ahora medimos Selection Sort
+                                 
+00001f d005                          rcall TIMER1_RESET      ; otra vez reiniciamos el timer
                                  
 000020 e0f1                          ldi ZH, high(table_of_sorted_numbers_alg2)
 000021 ece8                          ldi ZL, low(table_of_sorted_numbers_alg2)
                                  
-000022 d048                          rcall SELECTION_SORT_N
+000022 d048                          rcall SELECTION_SORT_N  ; aquí corre Selection Sort
                                  
 000023 d010                          rcall TIMER1_READ_TO_time_alg2
+                                                             ; se guarda el tiempo que tardó
                                  
+                                 ; aquí básicamente el programa ya terminó
+                                 ; se queda en un loop infinito para que no avance más
                                  
                                  DONE:
 000024 cfff                          rjmp DONE
                                  
                                  
+                                 ; esta función solo reinicia el contador del timer
+                                 
                                  TIMER1_RESET:
                                  
-000025 e000                          ldi r16, 0
-000026 9300 0085                     sts TCNT1H, r16
-000028 9300 0084                     sts TCNT1L, r16
-00002a 9508                          ret
+000025 e000                          ldi r16, 0              ; cargamos 0
+000026 9300 0085                     sts TCNT1H, r16         ; limpiamos la parte alta del contador
+000028 9300 0084                     sts TCNT1L, r16         ; limpiamos la parte baja
+00002a 9508                          ret                     ; regresamos de la función
                                  
+                                 
+                                 ; aquí se lee el tiempo que tardó el primer algoritmo
                                  
                                  TIMER1_READ_TO_time_alg1:
                                  
-00002b 9120 0084                     lds r18, TCNT1L
-00002d 9130 0085                     lds r19, TCNT1H
+00002b 9120 0084                     lds r18, TCNT1L         ; lee la parte baja del timer
+00002d 9130 0085                     lds r19, TCNT1H         ; lee la parte alta
                                  
 00002f 9320 022d                     sts time_alg1_ticks,   r18
 000031 9330 022e                     sts time_alg1_ticks+1, r19
-                                 
+                                                             ; guarda el valor del timer en la variable
 000033 9508                          ret
                                  
+                                 
+                                 ; aquí se lee el tiempo del segundo algoritmo
                                  
                                  TIMER1_READ_TO_time_alg2:
                                  
@@ -1086,36 +1132,41 @@ AVRASM ver. 2.2.8  C:\Users\josea\OneDrive\Escritorio\Micro\Micro\Esacosa\Esacos
                                  
 000038 9320 022f                     sts time_alg2_ticks,   r18
 00003a 9330 0230                     sts time_alg2_ticks+1, r19
-                                 
+                                                             ; guarda el tiempo del segundo algoritmo
 00003c 9508                          ret
                                  
                                  
+                                 ; esta función copia N bytes de un arreglo a otro
+                                 
                                  COPY_N_BYTES:
                                  
-00003d e644                          ldi r20, N
+00003d e644                          ldi r20, N              ; r20 será el contador de los 100 elementos
                                  
                                  COPY_LOOP:
                                  
-00003e 9101                          ld  r16, Z+
-00003f 9309                          st  Y+, r16
+00003e 9101                          ld  r16, Z+             ; lee un valor del arreglo origen
+00003f 9309                          st  Y+, r16             ; lo guarda en el arreglo destino
                                  
-000040 954a                          dec r20
-000041 f7e1                          brne COPY_LOOP
+000040 954a                          dec r20                 ; reduce el contador
+000041 f7e1                          brne COPY_LOOP          ; sigue hasta copiar los 100
                                  
 000042 9508                          ret
                                  
+                                 
+                                 ; esta función llena el arreglo con números aleatorios
                                  
                                  FILL_RANDOM_0_100:
                                  
 000043 e0f1                          ldi ZH, high(table_of_unsorted_numbers)
 000044 e0e0                          ldi ZL, low(table_of_unsorted_numbers)
+                                                             ; Z apunta al inicio del arreglo
                                  
-000045 e644                          ldi r20, N
+000045 e644                          ldi r20, N              ; contador de los 100 números
                                  
                                  FILL_LOOP:
                                  
-000046 d004                          rcall RNG_NEXT_0_100
-000047 9301                          st   Z+, r16
+000046 d004                          rcall RNG_NEXT_0_100    ; genera un número aleatorio
+000047 9301                          st   Z+, r16            ; lo guarda en el arreglo
                                  
 000048 954a                          dec  r20
 000049 f7e1                          brne FILL_LOOP
@@ -1123,199 +1174,186 @@ AVRASM ver. 2.2.8  C:\Users\josea\OneDrive\Escritorio\Micro\Micro\Esacosa\Esacos
 00004a 9508                          ret
                                  
                                  
+                                 ; aquí está el generador de números pseudoaleatorios
+                                 
                                  RNG_NEXT_0_100:
                                  
-00004b 9100 022c                     lds r16, rng_state
+00004b 9100 022c                     lds r16, rng_state      ; carga el estado actual
                                  
 00004d 2f10                          mov r17, r16
-00004e 7011                          andi r17, 0x01
+00004e 7011                          andi r17, 0x01          ; obtiene el último bit
                                  
-00004f 9506                          lsr r16
+00004f 9506                          lsr r16                 ; mueve los bits a la derecha
                                  
 000050 2311                          tst r17
 000051 f011                          breq RNG_NOXOR
                                  
 000052 eb28                          ldi r18, 0xB8
-000053 2702                          eor r16, r18
-                                 
+000053 2702                          eor r16, r18            ; hace XOR para generar otro número
                                  
                                  RNG_NOXOR:
                                  
-000054 9300 022c                     sts rng_state, r16
+000054 9300 022c                     sts rng_state, r16      ; guarda el nuevo estado
                                  
                                  
                                  REDUCE_MOD:
                                  
-000056 3605                          cpi r16, MODVAL
-000057 f010                          brlo RNG_DONE
+000056 3605                          cpi r16, MODVAL         ; compara con 101
+000057 f010                          brlo RNG_DONE           ; si ya es menor ya quedó
                                  
-000058 5605                          subi r16, MODVAL
+000058 5605                          subi r16, MODVAL        ; si es mayor le resta 101
 000059 cffc                          rjmp REDUCE_MOD
-                                 
                                  
                                  RNG_DONE:
 00005a 9508                          ret
                                  
                                  
+                                 ; aquí empieza Bubble Sort
+                                 ; básicamente este algoritmo compara pares de números vecinos
+                                 ; y si están al revés los intercambia hasta que todo quede ordenado
+                                 
                                  BUBBLE_SORT_N:
                                  
-00005b e653                          ldi r21, N-1
-                                 
+00005b e653                          ldi r21, N-1            ; r21 será el número de pasadas que hará el algoritmo
                                  
                                  BS_OUTER:
                                  
-00005c 01ef                          movw r28, r30
-00005d 2766                          clr  r22
-                                 
+00005c 01ef                          movw r28, r30           ; copiamos el puntero Z al puntero Y para empezar desde el inicio del arreglo
+00005d 2766                          clr  r22                ; r22 se usa como contador interno y lo empezamos en 0
                                  
                                  BS_INNER:
                                  
-00005e 8108                          ld   r16, Y
-00005f 8119                          ldd  r17, Y+1
+00005e 8108                          ld   r16, Y             ; carga en r16 el valor actual del arreglo
+00005f 8119                          ldd  r17, Y+1           ; carga en r17 el siguiente valor del arreglo
                                  
-000060 1710                          cp   r17, r16
-000061 f410                          brsh BS_NOSWAP
+000060 1710                          cp   r17, r16           ; compara los dos números
+000061 f410                          brsh BS_NOSWAP          ; si r17 es mayor o igual que r16 entonces ya están en orden
                                  
-000062 8318                          st   Y,   r17
-000063 8309                          std  Y+1, r16
-                                 
+000062 8318                          st   Y,   r17           ; si estaban al revés aquí se intercambian
+000063 8309                          std  Y+1, r16           ; guarda el valor anterior en la siguiente posición
                                  
                                  BS_NOSWAP:
                                  
-000064 9621                          adiw r28, 1
-000065 9563                          inc  r22
+000064 9621                          adiw r28, 1             ; avanza el puntero para revisar el siguiente par de números
+000065 9563                          inc  r22                ; aumenta el contador interno
                                  
-000066 1765                          cp   r22, r21
-000067 f3b0                          brlo BS_INNER
+000066 1765                          cp   r22, r21           ; revisa si ya terminó la pasada del arreglo
+000067 f3b0                          brlo BS_INNER           ; si todavía faltan elementos sigue comparando
                                  
-000068 955a                          dec r21
-000069 f791                          brne BS_OUTER
+000068 955a                          dec r21                 ; reduce el número de pasadas que quedan
+000069 f791                          brne BS_OUTER           ; si aún faltan pasadas vuelve a empezar desde el inicio
                                  
-00006a 9508                          ret
+00006a 9508                          ret                     ; cuando ya terminó todo regresa de la función
                                  
-                                 
+                                 	; aquí está Selection Sort
+                                 ; este algoritmo lo que hace es buscar el número más pequeño del arreglo
+                                 ; y lo va colocando en su lugar poco a poco
                                  
                                  SELECTION_SORT_N:
                                  
-00006b e050                          ldi r21, 0
-                                 
+00006b e050                          ldi r21, 0              ; r21 será el índice i, o sea la posición que estamos ordenando
                                  
                                  SS_OUTER:
                                  
-00006c 2f65                          mov r22, r21
+00006c 2f65                          mov r22, r21            ; r22 guardará la posición donde está el valor mínimo
                                  
-00006d 01ef                          movw r28, r30
-00006e 2f75                          mov r23, r21
-                                 
+00006d 01ef                          movw r28, r30           ; copiamos el puntero base del arreglo
+00006e 2f75                          mov r23, r21            ; r23 se usa para avanzar hasta la posición i
                                  
                                  SS_ADV_I:
                                  
-00006f 2377                          tst r23
-000070 f019                          breq SS_GOT_I
+00006f 2377                          tst r23                 ; revisa si ya llegamos a la posición i
+000070 f019                          breq SS_GOT_I           ; si ya es cero entonces ya estamos en esa posición
                                  
-000071 9621                          adiw r28,1
-000072 957a                          dec r23
-000073 cffb                          rjmp SS_ADV_I
-                                 
+000071 9621                          adiw r28,1              ; avanza el puntero una posición en el arreglo
+000072 957a                          dec r23                 ; reduce el contador
+000073 cffb                          rjmp SS_ADV_I           ; sigue avanzando
                                  
                                  SS_GOT_I:
                                  
-000074 8118                          ld r17, Y
+000074 8118                          ld r17, Y               ; r17 guarda el valor actual que tomamos como mínimo
                                  
-000075 2f85                          mov r24, r21
-000076 9583                          inc r24
-                                 
+000075 2f85                          mov r24, r21            ; copiamos i en r24
+000076 9583                          inc r24                 ; j = i + 1 para empezar a buscar el mínimo
                                  
                                  SS_INNER:
                                  
-000077 3684                          cpi r24, N
-000078 f470                          brsh SS_SWAP
+000077 3684                          cpi r24, N              ; revisa si ya llegamos al final del arreglo
+000078 f470                          brsh SS_SWAP            ; si ya llegamos entonces toca hacer el intercambio
                                  
-                                 
-000079 01ef                          movw r28, r30
-00007a 2f78                          mov r23, r24
-                                 
+000079 01ef                          movw r28, r30           ; regresamos al inicio del arreglo
+00007a 2f78                          mov r23, r24            ; r23 se usa para avanzar hasta la posición j
                                  
                                  SS_ADV_J:
                                  
-00007b 2377                          tst r23
-00007c f019                          breq SS_GOT_J
+00007b 2377                          tst r23                 ; revisa si ya llegamos a j
+00007c f019                          breq SS_GOT_J           ; si sí entonces ya podemos leer el valor
                                  
-00007d 9621                          adiw r28,1
+00007d 9621                          adiw r28,1              ; avanza el puntero en el arreglo
 00007e 957a                          dec r23
 00007f cffb                          rjmp SS_ADV_J
                                  
-                                 
                                  SS_GOT_J:
                                  
-000080 8128                          ld r18, Y
+000080 8128                          ld r18, Y               ; carga el valor que está en la posición j
                                  
-000081 1721                          cp r18, r17
-000082 f410                          brsh SS_NEXT_J
+000081 1721                          cp r18, r17             ; compara el valor actual con el mínimo guardado
+000082 f410                          brsh SS_NEXT_J          ; si no es menor entonces seguimos buscando
                                  
-000083 2f12                          mov r17, r18
-000084 2f68                          mov r22, r24
-                                 
+000083 2f12                          mov r17, r18            ; si encontramos uno más pequeño lo guardamos como nuevo mínimo
+000084 2f68                          mov r22, r24            ; guardamos también su posición
                                  
                                  SS_NEXT_J:
                                  
-000085 9583                          inc r24
-000086 cff0                          rjmp SS_INNER
-                                 
+000085 9583                          inc r24                 ; avanzamos j a la siguiente posición
+000086 cff0                          rjmp SS_INNER           ; seguimos buscando el mínimo
                                  
                                  
                                  SS_SWAP:
                                  
-000087 1765                          cp r22, r21
-000088 f091                          breq SS_NEXT_I
+000087 1765                          cp r22, r21             ; revisa si el mínimo ya estaba en la posición correcta
+000088 f091                          breq SS_NEXT_I          ; si sí entonces no hace falta intercambiar
                                  
-                                 
-000089 01ef                          movw r28, r30
-00008a 2f75                          mov r23, r21
-                                 
+000089 01ef                          movw r28, r30           ; volvemos al inicio del arreglo
+00008a 2f75                          mov r23, r21            ; avanzamos hasta la posición i
                                  
                                  SS_ADV_I2:
                                  
-00008b 2377                          tst r23
+00008b 2377                          tst r23                 ; revisa si ya llegamos a i
 00008c f019                          breq SS_I_READY
                                  
-00008d 9621                          adiw r28,1
+00008d 9621                          adiw r28,1              ; avanza en el arreglo
 00008e 957a                          dec r23
 00008f cffb                          rjmp SS_ADV_I2
                                  
-                                 
                                  SS_I_READY:
                                  
-000090 8128                          ld r18, Y
+000090 8128                          ld r18, Y               ; r18 guarda el valor que estaba en la posición i
                                  
-                                 
-000091 01df                          movw r26, r30
+000091 01df                          movw r26, r30           ; usamos el puntero X para movernos al mínimo encontrado
 000092 2f76                          mov r23, r22
-                                 
                                  
                                  SS_ADV_MIN:
                                  
-000093 2377                          tst r23
+000093 2377                          tst r23                 ; revisa si ya llegamos a la posición del mínimo
 000094 f019                          breq SS_MIN_READY
                                  
-000095 9611                          adiw r26,1
+000095 9611                          adiw r26,1              ; avanza el puntero
 000096 957a                          dec r23
 000097 cffb                          rjmp SS_ADV_MIN
                                  
-                                 
                                  SS_MIN_READY:
                                  
-000098 913c                          ld r19, X
+000098 913c                          ld r19, X               ; r19 guarda el valor mínimo encontrado
                                  
-000099 8338                          st Y, r19
-00009a 932c                          st X, r18
-                                 
+000099 8338                          st Y, r19               ; pone el mínimo en la posición i
+00009a 932c                          st X, r18               ; pone el valor que estaba en i en la posición del mínimo
                                  
                                  SS_NEXT_I:
                                  
-00009b 9553                          inc r21
-00009c 3653                          cpi r21, N-1
-00009d f270                          brlo SS_OUTER
+00009b 9553                          inc r21                 ; i avanza a la siguiente posición
+00009c 3653                          cpi r21, N-1            ; revisa si ya casi terminamos el arreglo
+00009d f270                          brlo SS_OUTER           ; si no, vuelve a repetir el proceso
                                  
 
 
