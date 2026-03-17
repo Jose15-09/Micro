@@ -82,3 +82,105 @@ RESET:
 
     rcall TIMER1_READ_TO_time_alg1
                             ; Se guarda el tiempo que tardó el algoritmo
+
+    ; ahora se preparan los datos para el segundo algoritmo
+
+    ldi ZH, high(table_of_unsorted_numbers)
+    ldi ZL, low(table_of_unsorted_numbers)
+
+    ldi YH, high(table_of_sorted_numbers_alg2)
+    ldi YL, low(table_of_sorted_numbers_alg2)
+
+    rcall COPY_N_BYTES      ; vuelve a copiar el arreglo original
+
+    ; ahora medimos Selection Sort
+
+    rcall TIMER1_RESET      ; otra vez reiniciamos el timer
+
+    ldi ZH, high(table_of_sorted_numbers_alg2)
+    ldi ZL, low(table_of_sorted_numbers_alg2)
+
+    rcall SELECTION_SORT_N  ; aquí corre Selection Sort
+
+    rcall TIMER1_READ_TO_time_alg2
+                            ; se guarda el tiempo que tardó
+
+; aquí básicamente el programa ya terminó
+; se queda en un loop infinito para que no avance más
+
+DONE:
+    rjmp DONE
+
+
+; esta función solo reinicia el contador del timer
+
+TIMER1_RESET:
+
+    ldi r16, 0              ; cargamos 0
+    sts TCNT1H, r16         ; limpiamos la parte alta del contador
+    sts TCNT1L, r16         ; limpiamos la parte baja
+    ret                     ; regresamos de la función
+
+
+; aquí se lee el tiempo que tardó el primer algoritmo
+
+TIMER1_READ_TO_time_alg1:
+
+    lds r18, TCNT1L         ; lee la parte baja del timer
+    lds r19, TCNT1H         ; lee la parte alta
+
+    sts time_alg1_ticks,   r18
+    sts time_alg1_ticks+1, r19
+                            ; guarda el valor del timer en la variable
+    ret
+
+
+; aquí se lee el tiempo del segundo algoritmo
+
+TIMER1_READ_TO_time_alg2:
+
+    lds r18, TCNT1L
+    lds r19, TCNT1H
+
+    sts time_alg2_ticks,   r18
+    sts time_alg2_ticks+1, r19
+                            ; guarda el tiempo del segundo algoritmo
+    ret
+
+
+; esta función copia N bytes de un arreglo a otro
+
+COPY_N_BYTES:
+
+    ldi r20, N              ; r20 será el contador de los 100 elementos
+
+COPY_LOOP:
+
+    ld  r16, Z+             ; lee un valor del arreglo origen
+    st  Y+, r16             ; lo guarda en el arreglo destino
+
+    dec r20                 ; reduce el contador
+    brne COPY_LOOP          ; sigue hasta copiar los 100
+
+    ret
+
+
+; esta función llena el arreglo con números aleatorios
+
+FILL_RANDOM_0_100:
+
+    ldi ZH, high(table_of_unsorted_numbers)
+    ldi ZL, low(table_of_unsorted_numbers)
+                            ; Z apunta al inicio del arreglo
+
+    ldi r20, N              ; contador de los 100 números
+
+FILL_LOOP:
+
+    rcall RNG_NEXT_0_100    ; genera un número aleatorio
+    st   Z+, r16            ; lo guarda en el arreglo
+
+    dec  r20
+    brne FILL_LOOP
+
+    ret
