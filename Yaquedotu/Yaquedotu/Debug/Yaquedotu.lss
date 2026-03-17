@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\josea\OneDrive\Escritorio\Micro\Micro\Yaquedotu\Yaquedotu\main.asm Thu Mar 12 22:10:30 2026
+AVRASM ver. 2.2.8  C:\Users\josea\OneDrive\Escritorio\Micro\Micro\Yaquedotu\Yaquedotu\main.asm Mon Mar 16 18:03:53 2026
 
 [builtin](2): Including file 'D:/7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328Pdef.inc'
 [builtin](2): Including file 'D:/7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328Pdef.inc'
@@ -1251,111 +1251,79 @@ AVRASM ver. 2.2.8  C:\Users\josea\OneDrive\Escritorio\Micro\Micro\Yaquedotu\Yaqu
                                  
                                  SELECTION_SORT_N:
                                  
-00006b e050                          ldi r21, 0              ; r21 será el índice i, o sea la posición que estamos ordenando
+00006b 01ef                          movw r28, r30        ; Y = base del arreglo
+                                 
+00006c e040                          ldi r20, 0           ; i = 0
                                  
                                  SS_OUTER:
                                  
-00006c 2f65                          mov r22, r21            ; r22 guardará la posición donde está el valor mínimo
+00006d 3643                          cpi r20, N-1
+00006e f510                          brsh SS_DONE
                                  
-00006d 01ef                          movw r28, r30           ; copiamos el puntero base del arreglo
-00006e 2f75                          mov r23, r21            ; r23 se usa para avanzar hasta la posición i
+00006f 2f54                          mov r21, r20         ; min_index = i
                                  
-                                 SS_ADV_I:
+                                     ; Z = &arr[i]
+000070 01fe                          movw r30, r28
+000071 0fe4                          add  r30, r20
+000072 1df1                          adc  r31, r1
                                  
-00006f 2377                          tst r23                 ; revisa si ya llegamos a la posición i
-000070 f019                          breq SS_GOT_I           ; si ya es cero entonces ya estamos en esa posición
+000073 01df                          movw r26, r30        ; X = &arr[i]
                                  
-000071 9621                          adiw r28,1              ; avanza el puntero una posición en el arreglo
-000072 957a                          dec r23                 ; reduce el contador
-000073 cffb                          rjmp SS_ADV_I           ; sigue avanzando
-                                 
-                                 SS_GOT_I:
-                                 
-000074 8118                          ld r17, Y               ; r17 guarda el valor actual que tomamos como mínimo
-                                 
-000075 2f85                          mov r24, r21            ; copiamos i en r24
-000076 9583                          inc r24                 ; j = i + 1 para empezar a buscar el mínimo
+000074 2f64                          mov r22, r20
+000075 9563                          inc r22              ; j = i+1
                                  
                                  SS_INNER:
                                  
-000077 3684                          cpi r24, N              ; revisa si ya llegamos al final del arreglo
-000078 f470                          brsh SS_SWAP            ; si ya llegamos entonces toca hacer el intercambio
+000076 3664                          cpi r22, N
+000077 f458                          brsh SS_SWAP
                                  
-000079 01ef                          movw r28, r30           ; regresamos al inicio del arreglo
-00007a 2f78                          mov r23, r24            ; r23 se usa para avanzar hasta la posición j
+000078 9631                          adiw r30,1           ; Z = &arr[j]
+000079 8100                          ld r16, Z            ; r16 = arr[j]
                                  
-                                 SS_ADV_J:
+                                     ; cargar arr[min_index]
+00007a 01de                          movw r26, r28
+00007b 0fa5                          add r26, r21
+00007c 1db1                          adc r27, r1
+00007d 911c                          ld r17, X
                                  
-00007b 2377                          tst r23                 ; revisa si ya llegamos a j
-00007c f019                          breq SS_GOT_J           ; si sí entonces ya podemos leer el valor
+00007e 1701                          cp r16, r17
+00007f f408                          brsh SS_NEXT_J
                                  
-00007d 9621                          adiw r28,1              ; avanza el puntero en el arreglo
-00007e 957a                          dec r23
-00007f cffb                          rjmp SS_ADV_J
-                                 
-                                 SS_GOT_J:
-                                 
-000080 8128                          ld r18, Y               ; carga el valor que está en la posición j
-                                 
-000081 1721                          cp r18, r17             ; compara el valor actual con el mínimo guardado
-000082 f410                          brsh SS_NEXT_J          ; si no es menor entonces seguimos buscando
-                                 
-000083 2f12                          mov r17, r18            ; si encontramos uno más pequeño lo guardamos como nuevo mínimo
-000084 2f68                          mov r22, r24            ; guardamos también su posición
+000080 2f56                          mov r21, r22         ; nuevo min_index
                                  
                                  SS_NEXT_J:
                                  
-000085 9583                          inc r24                 ; avanzamos j a la siguiente posición
-000086 cff0                          rjmp SS_INNER           ; seguimos buscando el mínimo
+000081 9563                          inc r22
+000082 cff3                          rjmp SS_INNER
                                  
                                  
                                  SS_SWAP:
                                  
-000087 1765                          cp r22, r21             ; revisa si el mínimo ya estaba en la posición correcta
-000088 f091                          breq SS_NEXT_I          ; si sí entonces no hace falta intercambiar
+000083 1754                          cp r21, r20
+000084 f051                          breq SS_NEXT_I
                                  
-000089 01ef                          movw r28, r30           ; volvemos al inicio del arreglo
-00008a 2f75                          mov r23, r21            ; avanzamos hasta la posición i
+                                     ; arr[i]
+000085 01fe                          movw r30, r28
+000086 0fe4                          add r30, r20
+000087 1df1                          adc r31, r1
+000088 8100                          ld r16, Z
                                  
-                                 SS_ADV_I2:
+                                     ; arr[min_index]
+000089 01de                          movw r26, r28
+00008a 0fa5                          add r26, r21
+00008b 1db1                          adc r27, r1
+00008c 911c                          ld r17, X
                                  
-00008b 2377                          tst r23                 ; revisa si ya llegamos a i
-00008c f019                          breq SS_I_READY
-                                 
-00008d 9621                          adiw r28,1              ; avanza en el arreglo
-00008e 957a                          dec r23
-00008f cffb                          rjmp SS_ADV_I2
-                                 
-                                 SS_I_READY:
-                                 
-000090 8128                          ld r18, Y               ; r18 guarda el valor que estaba en la posición i
-                                 
-000091 01df                          movw r26, r30           ; usamos el puntero X para movernos al mínimo encontrado
-000092 2f76                          mov r23, r22
-                                 
-                                 SS_ADV_MIN:
-                                 
-000093 2377                          tst r23                 ; revisa si ya llegamos a la posición del mínimo
-000094 f019                          breq SS_MIN_READY
-                                 
-000095 9611                          adiw r26,1              ; avanza el puntero
-000096 957a                          dec r23
-000097 cffb                          rjmp SS_ADV_MIN
-                                 
-                                 SS_MIN_READY:
-                                 
-000098 913c                          ld r19, X               ; r19 guarda el valor mínimo encontrado
-                                 
-000099 8338                          st Y, r19               ; pone el mínimo en la posición i
-00009a 932c                          st X, r18               ; pone el valor que estaba en i en la posición del mínimo
+00008d 8310                          st Z, r17
+00008e 930c                          st X, r16
                                  
                                  SS_NEXT_I:
                                  
-00009b 9553                          inc r21                 ; i avanza a la siguiente posición
-00009c 3653                          cpi r21, N-1            ; revisa si ya casi terminamos el arreglo
-00009d f270                          brlo SS_OUTER           ; si no, vuelve a repetir el proceso
+00008f 9543                          inc r20
+000090 cfdc                          rjmp SS_OUTER
                                  
-00009e 9508                          ret                     ; termina la función
+                                 
+                                 SS_DONE:
 
 
 RESOURCE USE INFORMATION
@@ -1373,39 +1341,39 @@ counted separately from r26..r31 here.
 .dseg memory usage only counts static data declared with .byte
 
 "ATmega328P" register use summary:
-x  :   2 y  :   9 z  :   2 r0 :   0 r1 :   1 r2 :   0 r3 :   0 r4 :   0 
+x  :   3 y  :   5 z  :   5 r0 :   0 r1 :   5 r2 :   0 r3 :   0 r4 :   0 
 r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16:  26 r17:   9 r18:  11 r19:   6 r20:   4 
-r21:  11 r22:   7 r23:  12 r24:   6 r25:   0 r26:   2 r27:   0 r28:  10 
-r29:   2 r30:  10 r31:   5 
-Registers used: 18 out of 35 (51.4%)
+r13:   0 r14:   0 r15:   0 r16:  30 r17:  10 r18:   6 r19:   4 r20:  12 
+r21:   8 r22:   8 r23:   0 r24:   0 r25:   0 r26:   5 r27:   2 r28:   9 
+r29:   2 r30:  13 r31:   7 
+Registers used: 17 out of 35 (48.6%)
 
 "ATmega328P" instruction use summary:
-.lds  :   0 .sts  :   0 adc   :   0 add   :   0 adiw  :   5 and   :   0 
+.lds  :   0 .sts  :   0 adc   :   4 add   :   4 adiw  :   2 and   :   0 
 andi  :   1 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
-brcc  :   0 brcs  :   0 break :   0 breq  :   6 brge  :   0 brhc  :   0 
-brhs  :   0 brid  :   0 brie  :   0 brlo  :   3 brlt  :   0 brmi  :   0 
-brne  :   3 brpl  :   0 brsh  :   3 brtc  :   0 brts  :   0 brvc  :   0 
+brcc  :   0 brcs  :   0 break :   0 breq  :   2 brge  :   0 brhc  :   0 
+brhs  :   0 brid  :   0 brie  :   0 brlo  :   2 brlt  :   0 brmi  :   0 
+brne  :   3 brpl  :   0 brsh  :   4 brtc  :   0 brts  :   0 brvc  :   0 
 brvs  :   0 bset  :   0 bst   :   0 call  :   0 cbi   :   0 cbr   :   0 
 clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   2 cls   :   0 
 clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   4 cpc   :   0 
-cpi   :   3 cpse  :   0 dec   :   7 eor   :   1 fmul  :   0 fmuls :   0 
+cpi   :   3 cpse  :   0 dec   :   3 eor   :   1 fmul  :   0 fmuls :   0 
 fmulsu:   0 icall :   0 ijmp  :   0 in    :   0 inc   :   4 jmp   :   0 
 ld    :   6 ldd   :   1 ldi   :  25 lds   :   5 lpm   :   0 lsl   :   0 
-lsr   :   1 mov   :   9 movw  :   5 mul   :   0 muls  :   0 mulsu :   0 
+lsr   :   1 mov   :   4 movw  :   7 mul   :   0 muls  :   0 mulsu :   0 
 neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :   2 pop   :   0 
-push  :   0 rcall :  10 ret   :   8 reti  :   0 rjmp  :   8 rol   :   0 
+push  :   0 rcall :  10 ret   :   8 reti  :   0 rjmp  :   5 rol   :   0 
 ror   :   0 sbc   :   0 sbci  :   0 sbi   :   0 sbic  :   0 sbis  :   0 
 sbiw  :   0 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 seh   :   0 
 sei   :   0 sen   :   0 ser   :   0 ses   :   0 set   :   0 sev   :   0 
 sez   :   0 sleep :   0 spm   :   0 st    :   5 std   :   1 sts   :  10 
-sub   :   0 subi  :   1 swap  :   0 tst   :   5 wdr   :   0 
-Instructions used: 28 out of 113 (24.8%)
+sub   :   0 subi  :   1 swap  :   0 tst   :   1 wdr   :   0 
+Instructions used: 30 out of 113 (26.5%)
 
 "ATmega328P" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x00013e    318      0    318   32768   1.0%
+[.cseg] 0x000000 0x000124    292      0    292   32768   0.9%
 [.dseg] 0x000100 0x000231      0    305    305    2048  14.9%
 [.eseg] 0x000000 0x000000      0      0      0    1024   0.0%
 

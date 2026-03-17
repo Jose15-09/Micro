@@ -265,108 +265,77 @@ BS_NOSWAP:
 
 SELECTION_SORT_N:
 
-    ldi r21, 0              ; r21 será el índice i, o sea la posición que estamos ordenando
+    movw r28, r30        ; Y = base del arreglo
+
+    ldi r20, 0           ; i = 0
 
 SS_OUTER:
 
-    mov r22, r21            ; r22 guardará la posición donde está el valor mínimo
+    cpi r20, N-1
+    brsh SS_DONE
 
-    movw r28, r30           ; copiamos el puntero base del arreglo
-    mov r23, r21            ; r23 se usa para avanzar hasta la posición i
+    mov r21, r20         ; min_index = i
 
-SS_ADV_I:
+    ; Z = &arr[i]
+    movw r30, r28
+    add  r30, r20
+    adc  r31, r1
 
-    tst r23                 ; revisa si ya llegamos a la posición i
-    breq SS_GOT_I           ; si ya es cero entonces ya estamos en esa posición
+    movw r26, r30        ; X = &arr[i]
 
-    adiw r28,1              ; avanza el puntero una posición en el arreglo
-    dec r23                 ; reduce el contador
-    rjmp SS_ADV_I           ; sigue avanzando
-
-SS_GOT_I:
-
-    ld r17, Y               ; r17 guarda el valor actual que tomamos como mínimo
-
-    mov r24, r21            ; copiamos i en r24
-    inc r24                 ; j = i + 1 para empezar a buscar el mínimo
+    mov r22, r20
+    inc r22              ; j = i+1
 
 SS_INNER:
 
-    cpi r24, N              ; revisa si ya llegamos al final del arreglo
-    brsh SS_SWAP            ; si ya llegamos entonces toca hacer el intercambio
+    cpi r22, N
+    brsh SS_SWAP
 
-    movw r28, r30           ; regresamos al inicio del arreglo
-    mov r23, r24            ; r23 se usa para avanzar hasta la posición j
+    adiw r30,1           ; Z = &arr[j]
+    ld r16, Z            ; r16 = arr[j]
 
-SS_ADV_J:
+    ; cargar arr[min_index]
+    movw r26, r28
+    add r26, r21
+    adc r27, r1
+    ld r17, X
 
-    tst r23                 ; revisa si ya llegamos a j
-    breq SS_GOT_J           ; si sí entonces ya podemos leer el valor
+    cp r16, r17
+    brsh SS_NEXT_J
 
-    adiw r28,1              ; avanza el puntero en el arreglo
-    dec r23
-    rjmp SS_ADV_J
-
-SS_GOT_J:
-
-    ld r18, Y               ; carga el valor que está en la posición j
-
-    cp r18, r17             ; compara el valor actual con el mínimo guardado
-    brsh SS_NEXT_J          ; si no es menor entonces seguimos buscando
-
-    mov r17, r18            ; si encontramos uno más pequeño lo guardamos como nuevo mínimo
-    mov r22, r24            ; guardamos también su posición
+    mov r21, r22         ; nuevo min_index
 
 SS_NEXT_J:
 
-    inc r24                 ; avanzamos j a la siguiente posición
-    rjmp SS_INNER           ; seguimos buscando el mínimo
+    inc r22
+    rjmp SS_INNER
 
 
 SS_SWAP:
 
-    cp r22, r21             ; revisa si el mínimo ya estaba en la posición correcta
-    breq SS_NEXT_I          ; si sí entonces no hace falta intercambiar
+    cp r21, r20
+    breq SS_NEXT_I
 
-    movw r28, r30           ; volvemos al inicio del arreglo
-    mov r23, r21            ; avanzamos hasta la posición i
+    ; arr[i]
+    movw r30, r28
+    add r30, r20
+    adc r31, r1
+    ld r16, Z
 
-SS_ADV_I2:
+    ; arr[min_index]
+    movw r26, r28
+    add r26, r21
+    adc r27, r1
+    ld r17, X
 
-    tst r23                 ; revisa si ya llegamos a i
-    breq SS_I_READY
-
-    adiw r28,1              ; avanza en el arreglo
-    dec r23
-    rjmp SS_ADV_I2
-
-SS_I_READY:
-
-    ld r18, Y               ; r18 guarda el valor que estaba en la posición i
-
-    movw r26, r30           ; usamos el puntero X para movernos al mínimo encontrado
-    mov r23, r22
-
-SS_ADV_MIN:
-
-    tst r23                 ; revisa si ya llegamos a la posición del mínimo
-    breq SS_MIN_READY
-
-    adiw r26,1              ; avanza el puntero
-    dec r23
-    rjmp SS_ADV_MIN
-
-SS_MIN_READY:
-
-    ld r19, X               ; r19 guarda el valor mínimo encontrado
-
-    st Y, r19               ; pone el mínimo en la posición i
-    st X, r18               ; pone el valor que estaba en i en la posición del mínimo
+    st Z, r17
+    st X, r16
 
 SS_NEXT_I:
 
-    inc r21                 ; i avanza a la siguiente posición
-    cpi r21, N-1            ; revisa si ya casi terminamos el arreglo
-    brlo SS_OUTER           ; si no, vuelve a repetir el proceso
+    inc r20
+    rjmp SS_OUTER
 
-    ret                     ; termina la función
+
+SS_DONE:
+    ret
