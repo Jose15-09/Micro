@@ -216,3 +216,40 @@ REDUCE_MOD:
 
 RNG_DONE:
     ret
+
+; aquí empieza Bubble Sort
+; básicamente este algoritmo compara pares de números vecinos
+; y si están al revés los intercambia hasta que todo quede ordenado
+
+BUBBLE_SORT_N:
+
+    ldi r21, N-1            ; r21 será el número de pasadas que hará el algoritmo
+
+BS_OUTER:
+
+    movw r28, r30           ; copiamos el puntero Z al puntero Y para empezar desde el inicio del arreglo
+    clr  r22                ; r22 se usa como contador interno y lo empezamos en 0
+
+BS_INNER:
+
+    ld   r16, Y             ; carga en r16 el valor actual del arreglo
+    ldd  r17, Y+1           ; carga en r17 el siguiente valor del arreglo
+
+    cp   r17, r16           ; compara los dos números
+    brsh BS_NOSWAP          ; si r17 es mayor o igual que r16 entonces ya están en orden
+
+    st   Y,   r17           ; si estaban al revés aquí se intercambian
+    std  Y+1, r16           ; guarda el valor anterior en la siguiente posición
+
+BS_NOSWAP:
+
+    adiw r28, 1             ; avanza el puntero para revisar el siguiente par de números
+    inc  r22                ; aumenta el contador interno
+
+    cp   r22, r21           ; revisa si ya terminó la pasada del arreglo
+    brlo BS_INNER           ; si todavía faltan elementos sigue comparando
+
+    dec r21                 ; reduce el número de pasadas que quedan
+    brne BS_OUTER           ; si aún faltan pasadas vuelve a empezar desde el inicio
+
+    ret                     ; cuando ya terminó todo regresa de la función
