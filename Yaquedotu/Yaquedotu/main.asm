@@ -184,3 +184,35 @@ FILL_LOOP:
     brne FILL_LOOP
 
     ret
+; Generador de números pseudoaleatorios
+
+RNG_NEXT_0_100:
+
+    lds r16, rng_state      ; Carga el estado actual
+
+    mov r17, r16
+    andi r17, 0x01          ; Obtiene el último bit
+
+    lsr r16                 ; Mueve los bits a la derecha
+
+    tst r17
+    breq RNG_NOXOR
+
+    ldi r18, 0xB8
+    eor r16, r18            ; Hace XOR para generar otro número
+
+RNG_NOXOR:
+
+    sts rng_state, r16      ; Guarda el nuevo estado
+
+
+REDUCE_MOD:
+
+    cpi r16, MODVAL         ; Compara con 101
+    brlo RNG_DONE           ; Si es menor ya quedó
+
+    subi r16, MODVAL        ; Si es mayor le resta 101
+    rjmp REDUCE_MOD
+
+RNG_DONE:
+    ret
