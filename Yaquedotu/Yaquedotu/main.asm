@@ -253,3 +253,82 @@ BS_NOSWAP:
     brne BS_OUTER           ; si aún faltan pasadas vuelve a empezar desde el inicio
 
     ret                     ; cuando ya terminó todo regresa de la función
+; Selection Sort
+; Busca el número más pequeño del arreglo  lo coloca en su lugar poco a poco
+
+SELECTION_SORT_N:
+
+    movw r28, r30        ; Y = base del arreglo
+
+    ldi r20, 0           ; i = 0
+
+SS_OUTER:
+
+    cpi r20, N-1
+    brsh SS_DONE
+
+    mov r21, r20         ; min_index = i
+
+    ; Z = &arr[i]
+    movw r30, r28
+    add  r30, r20
+    adc  r31, r1
+
+    movw r26, r30        ; X = &arr[i]
+
+    mov r22, r20
+    inc r22              ; j = i+1
+
+SS_INNER:
+
+    cpi r22, N
+    brsh SS_SWAP
+
+    adiw r30,1           ; Z = &arr[j]
+    ld r16, Z            ; r16 = arr[j]
+
+    ; cargar arr[min_index]
+    movw r26, r28
+    add r26, r21
+    adc r27, r1
+    ld r17, X
+
+    cp r16, r17
+    brsh SS_NEXT_J
+
+    mov r21, r22         ; nuevo min_index
+
+SS_NEXT_J:
+
+    inc r22
+    rjmp SS_INNER
+
+
+SS_SWAP:
+
+    cp r21, r20
+    breq SS_NEXT_I
+
+    ; arr[i]
+    movw r30, r28
+    add r30, r20
+    adc r31, r1
+    ld r16, Z
+
+    ; arr[min_index]
+    movw r26, r28
+    add r26, r21
+    adc r27, r1
+    ld r17, X
+
+    st Z, r17
+    st X, r16
+
+SS_NEXT_I:
+
+    inc r20
+    rjmp SS_OUTER
+
+
+SS_DONE:
+    ret
