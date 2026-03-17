@@ -16,3 +16,9 @@ rng_state:                      .byte 1   ; Variable que guarda el estado del ge
 
 time_alg1_ticks:                .byte 2   ; Se guarda el tiempo de Bubble Sort
 time_alg2_ticks:                .byte 2   ; Se guarda el tiempo de Selection Sort
+
+; 3. A partir de aquí ya empieza el código que ejecuta el microcontrolador
+
+.cseg
+.org 0x0000
+    rjmp RESET              ; cuando el micro arranca siempre empieza en 0x0000 y de una vez brinca a RESET
